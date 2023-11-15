@@ -29,8 +29,8 @@ These issues are not noticed by most people who developed cell type deconvolutio
 
 Download *.exe files to a local fold in a Windows system. Run “ReDeconv_Normalization.exe” for the scRNA-seq data normalization and “ReDeconv_Percentage.exe” for cell type deconvolution.
 
-* ReDeconv_Normalization_GUI.exe
-* ReDeconv_Percentage_GUI.exe
+* [ReDeconv_Normalization_GUI.exe](https://redeconv.stjude.org/dl/exe/ReDeconv_Normalization_GUI.exe)
+* [ReDeconv_Percentage_GUI.exe](https://redeconv.stjude.org/dl/exe/ReDeconv_Percentage_GUI.exe)
 
 Note: You may need about one minute to load and start the program.
 
@@ -74,11 +74,11 @@ Sign in at [redeconv.stjude.org](https://redeconv.stjude.org/#signin)
 
 ## Demo data
 
-These data sets include demo data for normalization and deconvolution. The sizes of files in the demo data are not very large. So, the time to test our model should be finished within 20 minutes.
+These data sets include demo data for [normalization](https://redeconv.stjude.org/dl/data/demo_normalization.zip) and [deconvolution](https://redeconv.stjude.org/dl/data/demo_deconvolution.zip). The sizes of files in the demo data are not very large. So, the time to test our model should be finished within 20 minutes.
 
 ## Data for ReDeconv evaluation
 
-We provide all scRNA-seq, synthetic bulk RNA-seq, and real bulk RNA-seq data that were used to evaluate ReDeconv, which is suppressed into a .zip file. The excel file in the .zip file includes information about the data source and ground truth of the synthetic bulk RNA-seq data.
+We provide all scRNA-seq, synthetic bulk RNA-seq, and real bulk RNA-seq data that were used to evaluate ReDeconv, which is suppressed into [a .zip file](https://redeconv.stjude.org/dl/data/alldata_evaluation.zip). The excel file in the .zip file includes information about the data source and ground truth of the synthetic bulk RNA-seq data.
 
 ## Funding Information
 
