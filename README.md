@@ -82,7 +82,7 @@ We provide all scRNA-seq, synthetic bulk RNA-seq, and real bulk RNA-seq data tha
 
 ## Funding Information
 
-This work was supported in part by National Institutes of Health grants R01GM134382 (to J.Yu), U01CA264610 (to J.Yu) and by the American Lebanese Syrian Associated Charities. Note: the content is solely the responsibility of the authors and does not necessarily represent the official views of the National Institutes of Health.
+This work was supported in part by National Institutes of Health grants R01GM134382, U01CA264610, and U01CA281868 and by the American Lebanese Syrian Associated Charities.
 
 ## Contact
 
