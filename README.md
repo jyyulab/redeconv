@@ -86,4 +86,4 @@ This work was supported in part by National Institutes of Health grants R01GM134
 
 ## Contact
 
-Please contact Songjian Lu (Songjian.Lu ![](https://github.com/jyyulab/redeconv/blob/9ece6a6c3455ed6c06d3e86e18aa68b64520337b/assets/at.svg) stjude.org) for any problems related to model, algorithm, GUI version and the python package for ReDeconv. Please contact Lei Yan (Lei.Yan ![](https://github.com/jyyulab/redeconv/blob/9ece6a6c3455ed6c06d3e86e18aa68b64520337b/assets/at.svg) stjude.org) for any problems related to the web portable of ReDeconv.
+Please contact Songjian Lu (Songjian.Lu ![](https://github.com/jyyulab/redeconv/blob/9ece6a6c3455ed6c06d3e86e18aa68b64520337b/assets/at.svg) stjude.org) for any problems related to model, algorithm, GUI version and the python package for ReDeconv. Please contact Lei Yan (Lei.Yan ![](https://github.com/jyyulab/redeconv/blob/9ece6a6c3455ed6c06d3e86e18aa68b64520337b/assets/at.svg) stjude.org) for any problems related to the web portal of ReDeconv.
