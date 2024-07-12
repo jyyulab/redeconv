@@ -8,7 +8,9 @@ import scipy.stats as stats
 import numpy, math, time, random
 from numpy.linalg import inv
 from scipy.optimize import nnls
-
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt  
 
 
 p_st_development = 'N'
@@ -51,6 +53,50 @@ def read_meta_info(p_file, p_cid_colNo = 0, p_type_colNo = 1, p_sp = '\t'):
          print(item, L_rets2[item])
          
    return L_rets, L_rets2
+
+
+def read_meta_info_2(p_file, p_CellNo_LB=30, p_cid_colNo = 0, p_type_colNo = 1, p_sp = '\t'):
+   L_rets = {}; L_rets2 = {}
+   ff = open(p_file, 'r')
+   count = 0
+   for ln in ff:
+      count += 1
+      if count>1:
+         ln0 = ln.split('\n')
+         ln1 = ln0[0].split(p_sp)
+         ctype = ln1[p_type_colNo]
+         cid = ln1[p_cid_colNo]
+         if not ctype in L_rets:
+            L_rets[ctype] = {}
+         L_rets[ctype][cid] = 1
+         ctype2 = ctype.split('"')
+         if len(ctype2)>1:
+            ctype = ctype2[1]
+         L_rets2[cid] = ctype
+
+   ff.close()
+   
+   L_rets_new = {}
+   for ctp in L_rets:
+      if len(L_rets[ctp])>=p_CellNo_LB:
+         L_rets_new[ctp] = L_rets[ctp]
+
+   if (p_st_using.upper())[0] == 'Y':  
+      print('--- Counts of different cell types ---')
+   for tp in L_rets:
+      if len(L_rets[tp])>=p_CellNo_LB:
+         #print(tp, '\t', len(L_rets[tp]))
+         print(' +++',tp, '\t', len(L_rets[tp]))
+      else:
+         print(' ---',tp, '\t', len(L_rets[tp]), '\tExcluded!')
+
+   count = 0
+   for item in L_rets2:
+      count += 1
+      if count<5:
+         print(item, L_rets2[item])
+         
+   return L_rets_new, L_rets2
 
 def get_initial_Signature_genes_new_2(p_exp, p_groups, p_out, p_pv=0.05, p_fd = 2.0, p_level = 3, p_grp_geneNo = 1000, p_sp_in = '\t', p_sp_out = '\t'):
    # A gene that is considered as a signature gene must be significant  
@@ -169,6 +215,10 @@ def get_initial_Signature_genes_new_3(p_exp, p_groups, p_out, p_pv=0.05, p_fd = 
    # A gene that is considered as a signature gene must be significant  
    # up-regulated in one group (Comparing with all other groups)
    # expression total accross all cells should be larger than mean(all totals)-std
+   
+   Level_UB = min(len(p_groups) - 2, p_level)
+   
+   
    L_rets = {}; L_rets2 = {}; L_grps = {}; L_grp_list = []; L_exp_sum = {}
    for grp in p_groups:
       L_rets[grp] = {}
@@ -214,7 +264,8 @@ def get_initial_Signature_genes_new_3(p_exp, p_groups, p_out, p_pv=0.05, p_fd = 
             t_exp1 = t_grp_exp[grp]
             t_st = 0; t_max_pv = 0; t_min_fd = math.inf; t_mid = 0; t_m2_zero = 0
             tmean = numpy.mean(t_exp1)
-            tstd = numpy.std(t_exp1, axis=0)            
+            tstd = numpy.std(t_exp1, axis=0)
+            t_ctp_missed = []
             for grp2 in L_grp_list:
                if not grp2==grp:
                   t_exp2 = t_grp_exp[grp2]
@@ -228,18 +279,30 @@ def get_initial_Signature_genes_new_3(p_exp, p_groups, p_out, p_pv=0.05, p_fd = 
                      if tmean2>0:
                         if tmean/tmean2>=p_fd:
                            t_st += 1
+                        else:
+                           t_ctp_missed.append(grp2)
                         if t_min_fd>tmean/tmean2:
                            t_min_fd = tmean/tmean2
                      else:
                         if tmean>0:
                            t_st += 1
                            t_m2_zero += 1
+                        else:
+                           t_ctp_missed.append(grp2)
+                  else:
+                     t_ctp_missed.append(grp2)
+                     if p_val1_2>t_max_pv:
+                        t_max_pv = p_val1_2                     
+                     if tmean2>0:
+                        if t_min_fd>tmean/tmean2:
+                           t_min_fd = tmean/tmean2                     
+                     
             t_level = len(p_groups) - t_st - 1
             #if t_st >= len(p_groups)-1:
-            if t_level <= p_level:
+            if t_level <= Level_UB:
                if not t_level in L_rets[grp]:
                   L_rets[grp][t_level] = {}
-               L_rets[grp][t_level][gene] = [str(t_max_pv), str(t_min_fd), str(t_level), str(tmean), str(tstd)]
+               L_rets[grp][t_level][gene] = [str(t_max_pv), str(t_min_fd), str(t_level), str(tmean), str(tstd), '|'.join(t_ctp_missed)]
 
             
    ff.close()
@@ -249,12 +312,16 @@ def get_initial_Signature_genes_new_3(p_exp, p_groups, p_out, p_pv=0.05, p_fd = 
    for grp in L_grp_list:
       if (p_st_using.upper())[0] == 'Y':
          print(grp, len(L_rets[grp]))
+      tp_level_list = []
       for tlv in L_rets[grp]:
+         tp_level_list.append(tlv)
+      tp_level_list.sort()
+      for tlv in tp_level_list:
          if (p_st_using.upper())[0] == 'Y':
             print('   ',tlv, len(L_rets[grp][tlv]))
          # count = 0
-         # for gene in L_rets[grp][tlv]:
-         #    L_total_genes[gene] = 1
+         for gene in L_rets[grp][tlv]:
+             L_total_genes[gene] = 1
          #    count += 1
          #    if count<=2:
          #       print('   --',tlv,gene,L_rets[grp][tlv][gene])
@@ -356,18 +423,17 @@ def check_meta_and_scRNAseq_data(p_meta, p_exp):
          print(output)
    return L_rets
 
-def get_initial_Signature_Candidates(p_meta, p_exp, p_ini_fn_out, p_max_pv, p_min_fold_change):
+def get_initial_Signature_Candidates(p_meta, p_exp, p_ini_fn_out, p_max_pv, p_min_fold_change, p_cellNo_LB=30, p_no_sep_sampleNo=2):
    #read cell type information for all cells
    L_cid_colNo = 0  # Column index with the cell ID
    L_cell_type_colNo = 1  # Column index with the cell types
    L_sep = '\t'
-   L_groups, L_map = read_meta_info(p_meta, L_cid_colNo, L_cell_type_colNo, L_sep)
+   L_groups, L_map = read_meta_info_2(p_meta, p_cellNo_LB, L_cid_colNo, L_cell_type_colNo, L_sep)
    
-   get_initial_Signature_genes_new_3(p_exp,L_groups,p_ini_fn_out,p_max_pv,p_min_fold_change)   
+   get_initial_Signature_genes_new_3(p_exp,L_groups,p_ini_fn_out,p_max_pv,p_min_fold_change,p_no_sep_sampleNo)   
 
 
-
-def chose_sig_genes_top_std_mean_ratio_3(p_fn, p_topNo = 10):
+def chose_sig_genes_top_std_mean_ratio_3(p_fn, p_topNo, p_fn_out):
    #consider only one cell type when choosing signature genes
    L_rets = {}
    ff = open(p_fn, 'r')
@@ -397,10 +463,108 @@ def chose_sig_genes_top_std_mean_ratio_3(p_fn, p_topNo = 10):
             t_pv = float(item[2])
             t_mean = float(item[5])
             t_std = float(item[6])
+            t_missed_ctp = item[7]
             t_std_mean_ratio = t_std/t_mean
             if not t_std_mean_ratio in L_std_mean_ratio_tp[grp][tlv]:
                L_std_mean_ratio_tp[grp][tlv][t_std_mean_ratio] = []
-            L_std_mean_ratio_tp[grp][tlv][t_std_mean_ratio].append([t_gene,t_pv])
+            L_std_mean_ratio_tp[grp][tlv][t_std_mean_ratio].append([t_gene, t_pv, t_missed_ctp, t_mean, t_std])
+   
+
+            
+   L_gene_top_ratio = {}
+   L_gene_top_level = {}
+   for grp in L_std_mean_ratio_tp:
+       L_gene_top_ratio[grp] = []
+       L_gene_top_level[grp] = {}
+       t_level_all = []
+       for tlv in L_std_mean_ratio_tp[grp]:
+          t_level_all.append(tlv)
+       t_level_all.sort()
+       count = 0
+       for tlv in t_level_all:
+          t_ratio_all = []
+          for t_ratio in L_std_mean_ratio_tp[grp][tlv]:
+            t_ratio_all.append(t_ratio)
+          t_ratio_all.sort()
+          if count<=p_topNo:
+             L_gene_top_level[grp][tlv] = 0
+             for t_ratio in t_ratio_all:
+               for item in L_std_mean_ratio_tp[grp][tlv][t_ratio]:
+                   count += 1
+                   if count<=p_topNo:
+                      #if len(item[2])>0:
+                      L_gene_top_ratio[grp].append([item[0], grp, str(tlv), str(count),  str(item[3]), str(item[4]), item[2]])
+                      # else:
+                      #    L_gene_top_ratio[grp].append([item[0], grp, str(tlv), str(count),  str(item[3]), str(item[4]), 'NA'])
+                      L_gene_top_level[grp][tlv] += 1
+
+
+   for grp in L_gene_top_level:
+      if (p_st_using.upper())[0] == 'Y':
+         print(grp,' -------')
+         for tlv in L_gene_top_level[grp]:
+               print('  ',tlv,L_gene_top_level[grp][tlv])
+         
+
+   
+
+   fout = open(p_fn_out, 'w')
+   output = 'Sig_Gene\tCell_type\tLevel\tRank\tMean\tStd\tCell_type_unseparated\n'
+   fout.write(output)
+   G_sig_genes = {}; L_cell_type_chosen = {}
+   for grp in L_gene_top_ratio:
+      L_cell_type_chosen[grp] = 1
+      for item in L_gene_top_ratio[grp]:
+         G_sig_genes[item[0]] = 1
+         output = '\t'.join(item)
+         fout.write(output)
+         fout.write('\n')
+         if len(item[6])>0:
+            print(' ****', item[0], grp,'~',item[6])
+   fout.close()
+
+
+   if (p_st_using.upper())[0] == 'Y':     
+      print('--- Total gene#:', len(G_sig_genes))
+         
+   return G_sig_genes, L_cell_type_chosen
+
+
+def chose_sig_genes_top_std_mean_ratio_3_bak(p_fn, p_topNo = 100):
+   #consider only one cell type when choosing signature genes
+   L_rets = {}
+   ff = open(p_fn, 'r')
+   for ln in ff:
+      ln0 = ln.split('\n')
+      ln1 = ln0[0].split('\t')
+      gene = ln1[0]
+      grp = ln1[1]
+      t_level = int(ln1[4])
+      if not grp in L_rets:
+         L_rets[grp] = {}
+      if not t_level in L_rets[grp]:
+         L_rets[grp][t_level] = []
+      L_rets[grp][t_level].append(ln1)
+        
+   ff.close()
+   # for grp in L_rets:
+   #    print('---grp#:', grp, len(L_rets[grp]))
+   
+   L_std_mean_ratio_tp = {}
+   for grp in L_rets:
+      L_std_mean_ratio_tp[grp] = {}
+      for tlv in L_rets[grp]:
+         L_std_mean_ratio_tp[grp][tlv] = {}
+         for item in L_rets[grp][tlv]:
+            t_gene = item[0]
+            t_pv = float(item[2])
+            t_mean = float(item[5])
+            t_std = float(item[6])
+            t_missed_ctp = item[7]
+            t_std_mean_ratio = t_std/t_mean
+            if not t_std_mean_ratio in L_std_mean_ratio_tp[grp][tlv]:
+               L_std_mean_ratio_tp[grp][tlv][t_std_mean_ratio] = []
+            L_std_mean_ratio_tp[grp][tlv][t_std_mean_ratio].append([t_gene,t_pv, t_missed_ctp])
    
 
             
@@ -432,16 +596,16 @@ def chose_sig_genes_top_std_mean_ratio_3(p_fn, p_topNo = 10):
    for grp in L_gene_top_level:
       if (p_st_using.upper())[0] == 'Y':
          print(grp,' -------')
-      for tlv in L_gene_top_level[grp]:
-         if (p_st_using.upper())[0] == 'Y':
-            print('  ',tlv,L_gene_top_level[grp][tlv])
+         for tlv in L_gene_top_level[grp]:
+               print('  ',tlv,L_gene_top_level[grp][tlv])
          
 
    
 
    
-   G_sig_genes = {}
+   G_sig_genes = {}; L_cell_type_chosen = {}
    for grp in L_gene_top_ratio:
+      L_cell_type_chosen[grp] = 1
       for gene in L_gene_top_ratio[grp]:
          G_sig_genes[gene] = 1
 
@@ -449,11 +613,11 @@ def chose_sig_genes_top_std_mean_ratio_3(p_fn, p_topNo = 10):
    if (p_st_using.upper())[0] == 'Y':     
       print('--- Total gene#:', len(G_sig_genes))
          
-   return G_sig_genes
+   return G_sig_genes, L_cell_type_chosen
 
 
 
-def get_mean_std_sig_gene_cell_type_new2(p_exp, p_groups, p_top_genes, p_out, p_sp_in = '\t', p_sp_out = '\t'):
+def get_mean_std_sig_gene_cell_type_new2(p_exp, p_groups, p_top_genes, p_out, p_fn_heatmap, p_sp_in = '\t', p_sp_out = '\t'):
    # L_ini_genes = {}
    # fin = open(p_fn_initial_genes,'r')
    # count = 0
@@ -504,6 +668,9 @@ def get_mean_std_sig_gene_cell_type_new2(p_exp, p_groups, p_top_genes, p_out, p_
       break
    cty_all.sort()
    
+   GeneList = []
+   Cell_type_gene_mean = {}
+   
    ff = open(p_out,'w')
    output = ''
    for ctp in cty_all:
@@ -511,9 +678,14 @@ def get_mean_std_sig_gene_cell_type_new2(p_exp, p_groups, p_top_genes, p_out, p_
    output += '\n'
    ff.write(output)
    for gene in L_rets:
+       GeneList.append(gene)
 
        tlist = [gene]
        for grp in cty_all:
+          if not grp in Cell_type_gene_mean:
+             Cell_type_gene_mean[grp] = []
+          Cell_type_gene_mean[grp].append(float(L_rets[gene][grp][0]))
+          
           #print('\t',grp)
           #try:
           tlist.append(L_rets[gene][grp][0])
@@ -525,9 +697,18 @@ def get_mean_std_sig_gene_cell_type_new2(p_exp, p_groups, p_top_genes, p_out, p_
        ff.write(output+'\n')
 
    ff.close()
+   
+   df_corr = pd.DataFrame(Cell_type_gene_mean)  
+   df_corr.index = GeneList
+   
+
+   svm = sns.clustermap(df_corr, z_score=0, cmap="vlag", center=0)  
+   svm.savefig(p_fn_heatmap, dpi=400)
+   plt.close()
+   plt.show()
 
 
-def Get_signature_gene_matrix(p_exp, p_meta, p_ini_sig, p_mean_std_out, p_top_ub = 100):
+def Get_signature_gene_matrix(p_exp, p_meta, p_ini_sig, p_mean_std_out, p_top_ub, p_fn_heatmap, p_fn_out):
    #read cell type information for all cells
    L_cid_colNo = 0  # Column index with the cell ID
    L_cell_type_colNo = 1  # Column index with the cell types
@@ -537,14 +718,20 @@ def Get_signature_gene_matrix(p_exp, p_meta, p_ini_sig, p_mean_std_out, p_top_ub
 
    #Choose the top signature genes
    L_topNo = p_top_ub #Number of to signature genes for cell deconvolution
-   L_top_sig_genes = chose_sig_genes_top_std_mean_ratio_3(p_ini_sig, L_topNo)
+   L_top_sig_genes, L_Cell_types_Chosen = chose_sig_genes_top_std_mean_ratio_3(p_ini_sig, L_topNo, p_fn_out)
+   
+   #Get cellID for cell types chosen
+   L_groups_new = {}
+   for ctp in L_Cell_types_Chosen:
+      L_groups_new[ctp] = L_groups[ctp]
+      #print('---ctp', ctp, len(L_groups[ctp]))
    
    
    #get mean, std using raw count scRNA-seq file
-   get_mean_std_sig_gene_cell_type_new2(p_exp,L_groups,L_top_sig_genes,p_mean_std_out)
+   get_mean_std_sig_gene_cell_type_new2(p_exp,L_groups_new,L_top_sig_genes,p_mean_std_out, p_fn_heatmap)
 
 
-def Get_signature_gene_matrix_GeneSet(p_exp, p_meta, p_mean_std_out, p_choose_genes):
+def Get_signature_gene_matrix_GeneSet(p_exp, p_meta, p_mean_std_out, p_choose_genes, p_ini_sig, p_fn_heatmap):
    #read cell type information for all cells
    L_cid_colNo = 0  # Column index with the cell ID
    L_cell_type_colNo = 1  # Column index with the cell types
@@ -553,6 +740,15 @@ def Get_signature_gene_matrix_GeneSet(p_exp, p_meta, p_mean_std_out, p_choose_ge
 
 
    #Choose the top signature genes
+   #Choose the top signature genes
+   L_topNo = 10 #Number of to signature genes for cell deconvolution
+   L_top_sig_genes, L_Cell_types_Chosen = chose_sig_genes_top_std_mean_ratio_3(p_ini_sig, L_topNo)
+   
+   #Get cellID for cell types chosen
+   L_groups_new = {}
+   for ctp in L_Cell_types_Chosen:
+      L_groups_new[ctp] = L_groups[ctp]
+      
    #L_topNo = p_top_ub #Number of to signature genes for cell deconvolution
    L_top_sig_genes = {} # chose_sig_genes_top_std_mean_ratio_3(p_ini_sig, L_topNo)
    for gene in p_choose_genes:
@@ -560,7 +756,7 @@ def Get_signature_gene_matrix_GeneSet(p_exp, p_meta, p_mean_std_out, p_choose_ge
    
    
    #get mean, std using raw count scRNA-seq file
-   get_mean_std_sig_gene_cell_type_new2(p_exp,L_groups,L_top_sig_genes,p_mean_std_out)
+   get_mean_std_sig_gene_cell_type_new2(p_exp,L_groups_new,L_top_sig_genes,p_mean_std_out, p_fn_heatmap)
    
 
 
@@ -991,14 +1187,18 @@ def MLMD_nns(p_expression_RNAseq, p_mean_std, p_loop = 6):
       
 def Save_results(p_results, p_fn_out):
    Cell_type = []
+   #L_sample_list = []; L_ctp_sp_per = {}
+   
    fout = open(p_fn_out,'w')
    
    count = 0
    for sp in  p_results:
       count += 1
+      #L_sample_list.append(sp)
       if count == 1:
          for ctp in p_results[sp]:
             Cell_type.append(ctp)
+            #L_ctp_sp_per[ctp] = []
          Cell_type.sort()
          if (p_st_using.upper())[0] == 'Y':
             print('+++ cell types:', Cell_type)
@@ -1014,11 +1214,14 @@ def Save_results(p_results, p_fn_out):
       t_prediction = p_results[sp]
       for ctp in Cell_type:
           output += '\t'+str(t_prediction[ctp])
+          #L_ctp_sp_per[sp].append(t_prediction[ctp])
 
       fout.write(output)
       fout.write('\n')
 
    fout.close()
+   #return L_sample_list, L_ctp_sp_per
+
      
 def ReDeconv(p_sig_matrix, p_bulk_exp, p_fn_save):
    #Our new model for cell type deconvolution
