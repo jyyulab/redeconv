@@ -54,7 +54,7 @@ from redeconv.__ReDeconv_P import *
 ```shell
 conda create -n redeconv python=3.8
 conda activate redeconv
-git clone https://github.com/jyyulab/redeconv
+git clone https://github.com/jyyulab/redeconv.git
 cd redeconv
 python setup.py install
 ```
