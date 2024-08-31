@@ -4,7 +4,7 @@ ReDeconv presents an innovative approach for deconvolving cell types in bulk RNA
 
 ## ReDeconv Workflow
 
-![](https://github.com/jyyulab/redeconv/blob/31b7f0efcc7345f2c3f2b0a6f543249d3812c9df/assets/image020.png)
+![](./assets/image020.png)
 
 ## Major contributions of ReDeconv
 
