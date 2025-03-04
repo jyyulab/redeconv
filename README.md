@@ -90,4 +90,4 @@ Lu S, Yang J, Yan L, Liu J, Wang JJ, Jain R, Yu J. Transcriptome size matters fo
 
 ## Contact
 
-Please contact Songjian Lu (Songjian.Lu ![](https://github.com/jyyulab/redeconv/blob/9ece6a6c3455ed6c06d3e86e18aa68b64520337b/assets/at.svg) stjude.org) for any problems related to model, algorithm, GUI version and the python package for ReDeconv. Please contact Honglei Zhou (honglei.zhou ![](https://github.com/jyyulab/redeconv/blob/9ece6a6c3455ed6c06d3e86e18aa68b64520337b/assets/at.svg) stjude.org) for any problems related to the web portal of ReDeconv.
+Please contact Songjian Lu (Songjian.Lu ![](https://github.com/jyyulab/redeconv/raw/9ece6a6c3455ed6c06d3e86e18aa68b64520337b/assets/at.svg) stjude.org) for any problems related to model, algorithm, GUI version and the python package for ReDeconv. Please contact Honglei Zhou (honglei.zhou ![](https://github.com/jyyulab/redeconv/raw/9ece6a6c3455ed6c06d3e86e18aa68b64520337b/assets/at.svg) stjude.org) for any problems related to the web portal of ReDeconv.
