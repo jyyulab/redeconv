@@ -1,7 +1,6 @@
 __pycache__/
 .venv
 .idea/
-pyproject.toml
 build/
 dist/
 redeconv.egg-info/
