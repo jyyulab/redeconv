@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="redeconv",
-    version="1.0.5",
+    version="1.1.1",
     packages=find_packages(),
     install_requires=[
         "matplotlib==3.7.2",
